@@ -1,20 +1,28 @@
 import * as Notifications from 'expo-notifications';
-import * as Permissions from 'expo-permissions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CurrentForecast } from '../components/CurrentForecast';
 
 // Function to check user preferences and send notifications based on weather data
-async function checkAndSendNotifications() {
-  try {
-    const userPreferences = await AsyncStorage.getItem('userPreferences');
+export async function checkAndSendNotifications(currentTemperature) {
+    try {
+        // Request permission to send notifications if not already granted
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
     
+        if (finalStatus !== 'granted') {
+          console.log('Notification permissions not granted');
+          return; // Exit the function if permissions are not granted
+        }    
+    const userPreferences = await AsyncStorage.getItem('userPreferences');
+    console.log('User Preferences:', userPreferences);
+
     if (userPreferences) {
       const preferences = JSON.parse(userPreferences);
-      
       const { temperatureThresholdHigh } = preferences;
-      
-      const { current } = CurrentForecast;
-      const currentTemperature = current?.temp;
 
       if (parseFloat(currentTemperature) > parseFloat(temperatureThresholdHigh)) {
         // Send notification for high temperature alert
@@ -33,13 +41,11 @@ async function checkAndSendNotifications() {
   }
 }
 
-
 // Function to send a notification
 async function sendNotification(title, body) {
   try {
     // Request permission to send notifications if not already granted
-const { status } = await Notifications.getPermissionsAsync();
-
+    const { status } = await Notifications.getPermissionsAsync();
 
     if (status !== 'granted') {
       console.log('Notification permissions not granted');
@@ -63,5 +69,3 @@ const { status } = await Notifications.getPermissionsAsync();
     console.error('Error sending notification:', error);
   }
 }
-
-export default checkAndSendNotifications;
