@@ -3,11 +3,11 @@ import { View, Text, Switch, TextInput, Button, StyleSheet } from 'react-native'
 import { getData, storeData } from '../utils/asyncStorage';
 import { checkAndSendNotifications } from './notificationHandler'; // Correct import
 
-const NotificationsScreen = () => {
+const NotificationsScreen = ({ navigation }) => {
   const [userPreferences, setUserPreferences] = useState({
     notificationsEnabled: false,
-    temperatureThresholdHigh: '',
-    temperatureThresholdLow: '',
+    showtemperatureHighNotification: false,
+    showtemperatureLowNotification: false,
     showWindNotification: false,
     showPrecipitationNotification: false,
   });
@@ -24,13 +24,12 @@ const NotificationsScreen = () => {
       }
     };
 
-    fetchUserPreferences();
+    fetchUserPreferences(); // Call fetchUserPreferences when the component mounts
   }, []);
 
   useEffect(() => {
     console.log('User Preferences:', userPreferences);
     // Call the function to check and send notifications whenever user preferences change
-    checkAndSendNotifications();
   }, [userPreferences]); // Run the effect whenever user preferences change
 
   const savePreferences = async () => {
@@ -38,7 +37,6 @@ const NotificationsScreen = () => {
       await storeData('userPreferences', JSON.stringify(userPreferences));
       console.log('Preferences saved successfully!');
       // After saving preferences, check and send notifications again
-      checkAndSendNotifications();
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
@@ -62,11 +60,11 @@ const NotificationsScreen = () => {
               <View style={styles.checkboxContainer}>
                 <Text>High:</Text>
                 <Switch
-                  value={!!userPreferences.temperatureThresholdHigh}
-                  onValueChange={(value) => setUserPreferences({ ...userPreferences, temperatureThresholdHigh: value ? '0' : '' })}
+                  value={userPreferences.showtemperatureHighNotification}
+                  onValueChange={(value) => setUserPreferences({ ...userPreferences, showtemperatureHighNotification: value })}
                   disabled={!userPreferences.notificationsEnabled}
                 />
-                {!!userPreferences.temperatureThresholdHigh && (
+                {userPreferences.showtemperatureHighNotification && (
                   <TextInput
                     style={[styles.input, !userPreferences.notificationsEnabled && styles.disabled]}
                     placeholder="High temperature threshold"
@@ -85,11 +83,11 @@ const NotificationsScreen = () => {
               <View style={styles.checkboxContainer}>
                 <Text>Low:</Text>
                 <Switch
-                  value={!!userPreferences.temperatureThresholdLow}
-                  onValueChange={(value) => setUserPreferences({ ...userPreferences, temperatureThresholdLow: value ? '0' : '' })}
+                  value={userPreferences.showtemperatureLowNotification}
+                  onValueChange={(value) => setUserPreferences({ ...userPreferences, showtemperatureLowNotification: value })}
                   disabled={!userPreferences.notificationsEnabled}
                 />
-                {!!userPreferences.temperatureThresholdLow && (
+                {userPreferences.showtemperatureLowNotification && (
                   <TextInput
                     style={[styles.input, !userPreferences.notificationsEnabled && styles.disabled]}
                     placeholder="Low temperature threshold"
