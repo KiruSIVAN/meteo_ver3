@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useEffect } from 'react';
 import styled from "styled-components/native";
+import { checkAndSendNotifications } from '../screens/notificationHandler'; // Import the checkAndSendNotifications function
 
-const CurrentForecast = ({ currentWeather }) => {  
-  console.log("Current Weather Data:", currentWeather);
-
-
+const CurrentForecast = ({ currentWeather }) => {
+  useEffect(() => {
+    if (currentWeather && currentWeather.current) {
+      const currentTemperature = currentWeather.current.temp;
+      checkAndSendNotifications(currentTemperature);
+    }
+  }, [currentWeather]);
+  
   return (
     <CurrentView>
       <Timezone>{currentWeather.timezone}</Timezone>
