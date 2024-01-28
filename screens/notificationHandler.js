@@ -1,7 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Permissions from 'expo-permissions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { currentWeather } from '../components/CurrentForecast';
+import { CurrentForecast } from '../components/CurrentForecast';
 
 // Function to check user preferences and send notifications based on weather data
 async function checkAndSendNotifications() {
@@ -13,10 +13,7 @@ async function checkAndSendNotifications() {
       
       const { temperatureThresholdHigh } = preferences;
       
-      // Fetch weather data using fetchWeather function
-      const weatherData = await fetchMyWeatherData();
-
-      const { current } = weatherData;
+      const { current } = CurrentForecast;
       const currentTemperature = current?.temp;
 
       if (parseFloat(currentTemperature) > parseFloat(temperatureThresholdHigh)) {
