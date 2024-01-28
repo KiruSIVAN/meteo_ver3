@@ -6,7 +6,10 @@ const CurrentForecast = ({ currentWeather }) => {
   useEffect(() => {
     if (currentWeather && currentWeather.current) {
       const currentTemperature = currentWeather.current.temp;
-      checkAndSendNotifications(currentTemperature);
+      const currentWindSpeed = currentWeather.current.wind_speed; 
+      const currentPrecipitation = currentWeather.current.humidity; 
+
+      checkAndSendNotifications(currentTemperature, currentWindSpeed, currentPrecipitation );
     }
   }, [currentWeather]);
   
