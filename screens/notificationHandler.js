@@ -68,8 +68,12 @@ async function sendNotification(title, body) {
     const { status } = await Notifications.getPermissionsAsync();
 
     if (status !== 'granted') {
-      console.log('Notification permissions not granted');
-      return; // Exit the function if permissions are not granted
+      // Request permission if not granted
+      const { status: newStatus } = await Notifications.requestPermissionsAsync();
+      if (newStatus !== 'granted') {
+        console.log('Notification permissions not granted');
+        return;
+      }
     }
 
     // Permissions are granted, proceed to send notification
