@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841758397626",
+    "project_id": "meteo-24a34",
+    "storage_bucket": "meteo-24a34.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841758397626:android:42bcb12b7cb0d7b2ee1e83",
+        "android_client_info": {
+          "package_name": "com.kiruthika20020907.weatherappreactnative"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC895mKwm_cdg2Vx8kvVxAQsOROXhHiGT0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
