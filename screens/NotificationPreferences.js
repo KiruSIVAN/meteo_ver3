@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Switch, TextInput, Button, StyleSheet } from 'react-native';
 import { getData, storeData } from '../utils/asyncStorage';
+import { checkAndSendNotifications } from './notificationHandler'; // Correct import
 
 const NotificationsScreen = () => {
   const [userPreferences, setUserPreferences] = useState({
@@ -28,14 +29,16 @@ const NotificationsScreen = () => {
 
   useEffect(() => {
     console.log('User Preferences:', userPreferences);
-  }, [userPreferences]);
-
-  
+    // Call the function to check and send notifications whenever user preferences change
+    checkAndSendNotifications();
+  }, [userPreferences]); // Run the effect whenever user preferences change
 
   const savePreferences = async () => {
     try {
       await storeData('userPreferences', JSON.stringify(userPreferences));
       console.log('Preferences saved successfully!');
+      // After saving preferences, check and send notifications again
+      checkAndSendNotifications();
     } catch (error) {
       console.error('Error saving preferences:', error);
     }
