@@ -2,22 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { Bars3CenterLeftIcon } from 'react-native-heroicons/outline';
 
-const PopupMenu = ({ onNotificationPress, onReportIssuePress, onUnitsPress }) => {
-  const [menuVisible, setMenuVisible] = useState(false);
-
+const PopupMenu = ({ menuVisible, setMenuVisible, onNotificationPress, onReportIssuePress, onUnitsPress }) => {
   const toggleMenu = () => {
-    setMenuVisible(!menuVisible);
+    setMenuVisible(!menuVisible); // Toggle visibility using setMenuVisible function
   };
 
   return (
-    <View style={{ position: 'absolute', top: 10, right: -10 }}>
+    <View style={{ position: 'absolute', top: 30, right: 10, zIndex: 70 }}>
       <TouchableOpacity onPress={toggleMenu} style={{ padding: 10 }}>
         <Bars3CenterLeftIcon size={40} color="white" />
       </TouchableOpacity>
       <Modal visible={menuVisible} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, elevation: 10 }}>
-            <TouchableOpacity onPress={onNotificationPress} style={{ paddingVertical: 10 }}>
+            <TouchableOpacity onPress={onNotificationPress}  style={{ paddingVertical: 10 }}>
               <Text>Notifications</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={onReportIssuePress} style={{ paddingVertical: 10 }}>
@@ -34,7 +32,6 @@ const PopupMenu = ({ onNotificationPress, onReportIssuePress, onUnitsPress }) =>
       </Modal>
     </View>
   );
-  
-};
+}
 
 export default PopupMenu;

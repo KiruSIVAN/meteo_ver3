@@ -1,14 +1,8 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Switch,
-  TextInput,
-  Button,
-  StyleSheet,
-} from "react-native";
-import { getData, storeData } from "../utils/asyncStorage";
-import { checkAndSendNotifications } from "./notificationHandler"; // Correct import
+import React, { useState, useEffect } from 'react';
+import { View, Text, Switch, TextInput, Button, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { Platform } from 'react-native';
+import { getData, storeData } from '../utils/asyncStorage';
+import { scheduleNotificationAsync } from 'expo-notifications'; // Import scheduleNotificationAsync
 
 const NotificationsScreen = ({ navigation }) => {
   const [userPreferences, setUserPreferences] = useState({
@@ -17,71 +11,72 @@ const NotificationsScreen = ({ navigation }) => {
     showtemperatureLowNotification: false,
     showWindNotification: false,
     showPrecipitationNotification: false,
+    showFloodNotification: false,
+    showEarthquakeNotification: false,
+    showHurricaneNotification: false,
+    showTornadoNotification: false,
+    showWildfireNotification: false,
   });
+  const [preferencesSaved, setPreferencesSaved] = useState(false);
 
   useEffect(() => {
     const fetchUserPreferences = async () => {
       try {
-        const storedPreferences = await getData("userPreferences");
+        const storedPreferences = await getData('userPreferences');
         if (storedPreferences) {
-          console.log("Stored preferences:", storedPreferences);
-          setUserPreferences(storedPreferences);
+          setUserPreferences((storedPreferences));
         }
       } catch (error) {
-        console.error("Error fetching user preferences:", error);
+        console.error('Error fetching user preferences:', error);
       }
     };
-
-    fetchUserPreferences(); // Call fetchUserPreferences when the component mounts
+    
+    fetchUserPreferences();
   }, []);
-
-  useEffect(() => {
-    console.log("User Preferences:", userPreferences);
-    // Call the function to check and send notifications whenever user preferences change
-  }, [userPreferences]); // Run the effect whenever user preferences change
 
   const savePreferences = async () => {
     try {
-      await storeData("userPreferences", JSON.stringify(userPreferences));
-      console.log("Preferences saved successfully!");
-      // After saving preferences, check and send notifications again
+      await storeData('userPreferences', JSON.stringify(userPreferences)); // Stringify userPreferences
+      console.log('Preferences saved successfully!');
+      setPreferencesSaved(true);
     } catch (error) {
-      console.error("Error saving preferences:", error);
+      console.error('Error saving preferences:', error);
     }
   };
 
+  useEffect(() => {
+    console.log('Timezone:', 'America/Toronto');
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Notification Settings</Text>
-      <View style={styles.preference}>
-        <Text>Enable Notifications</Text>
-        <Switch
-          value={userPreferences.notificationsEnabled}
-          onValueChange={(value) =>
-            setUserPreferences({
-              ...userPreferences,
-              notificationsEnabled: value,
-            })
-          }
-        />
-      </View>
-      {userPreferences.notificationsEnabled && (
-        <>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Temperature Threshold (°C)</Text>
-            <View style={styles.thresholdTypeContainer}>
-              <View style={styles.checkboxContainer}>
-                <Text>High:</Text>
-                <Switch
-                  value={userPreferences.showtemperatureHighNotification}
-                  onValueChange={(value) =>
-                    setUserPreferences({
-                      ...userPreferences,
-                      showtemperatureHighNotification: value,
-                    })
-                  }
-                  disabled={!userPreferences.notificationsEnabled}
-                />
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : null}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Notification Settings</Text>
+        <View style={styles.preference}>
+          <Text>Enable Notifications</Text>
+          <Switch
+            value={userPreferences.notificationsEnabled}
+            onValueChange={(value) => setUserPreferences({ ...userPreferences, notificationsEnabled: value })}
+          />
+        </View>
+        {userPreferences.notificationsEnabled && (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Temperature Threshold (°C)</Text>
+              <View style={styles.thresholdTypeContainer}>
+                <View style={styles.checkboxContainer}>
+                  <Text>High:</Text>
+                  <Switch
+                    value={userPreferences.showtemperatureHighNotification}
+                    onValueChange={(value) =>
+                      setUserPreferences({
+                        ...userPreferences,
+                        showtemperatureHighNotification: value,
+                      })
+                    }
+                    disabled={!userPreferences.notificationsEnabled}
+                  />
+                </View>
                 {userPreferences.showtemperatureHighNotification && (
                   <TextInput
                     style={[
@@ -96,28 +91,27 @@ const NotificationsScreen = ({ navigation }) => {
                         temperatureThresholdHigh: value,
                       })
                     }
-                    keyboardType="numeric"
+                    keyboardType="default"
                     editable={userPreferences.notificationsEnabled}
                   />
                 )}
               </View>
-              <Text>°C</Text>
             </View>
-          </View>
-          <View style={styles.section}>
-            <View style={styles.thresholdTypeContainer}>
-              <View style={styles.checkboxContainer}>
-                <Text>Low:</Text>
-                <Switch
-                  value={userPreferences.showtemperatureLowNotification}
-                  onValueChange={(value) =>
-                    setUserPreferences({
-                      ...userPreferences,
-                      showtemperatureLowNotification: value,
-                    })
-                  }
-                  disabled={!userPreferences.notificationsEnabled}
-                />
+            <View style={styles.section}>
+              <View style={styles.thresholdTypeContainer}>
+                <View style={[styles.checkboxContainer, { marginRight: 10 }]}>
+                  <Text>Low:</Text>
+                  <Switch
+                    value={userPreferences.showtemperatureLowNotification}
+                    onValueChange={(value) =>
+                      setUserPreferences({
+                        ...userPreferences,
+                        showtemperatureLowNotification: value,
+                      })
+                    }
+                    disabled={!userPreferences.notificationsEnabled}
+                  />
+                </View>
                 {userPreferences.showtemperatureLowNotification && (
                   <TextInput
                     style={[
@@ -132,92 +126,158 @@ const NotificationsScreen = ({ navigation }) => {
                         temperatureThresholdLow: value,
                       })
                     }
-                    keyboardType="numeric"
+                    keyboardType="default"
                     editable={userPreferences.notificationsEnabled}
                   />
                 )}
               </View>
-              <Text>°C</Text>
             </View>
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Wind Speed Threshold (mph)</Text>
-            <View style={styles.thresholdTypeContainer}>
-              <Switch
-                value={userPreferences.showWindNotification}
-                onValueChange={(value) =>
-                  setUserPreferences({
-                    ...userPreferences,
-                    showWindNotification: value,
-                  })
-                }
-                disabled={!userPreferences.notificationsEnabled}
-              />
-              {userPreferences.showWindNotification && (
-                <TextInput
-                  style={[
-                    styles.input,
-                    !userPreferences.notificationsEnabled && styles.disabled,
-                  ]}
-                  placeholder="Wind speed threshold"
-                  value={userPreferences.windSpeedThreshold}
-                  onChangeText={(value) =>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Wind Speed Threshold (m/s)</Text>
+              <View style={styles.thresholdTypeContainer}>
+                <Switch
+                  value={userPreferences.showWindNotification}
+                  onValueChange={(value) =>
                     setUserPreferences({
                       ...userPreferences,
-                      windSpeedThreshold: value,
+                      showWindNotification: value,
                     })
                   }
-                  keyboardType="numeric"
-                  editable={userPreferences.notificationsEnabled}
+                  disabled={!userPreferences.notificationsEnabled}
                 />
-              )}
-              <Text>mph</Text>
+                {userPreferences.showWindNotification && (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      !userPreferences.notificationsEnabled && styles.disabled,
+                    ]}
+                    placeholder="Wind speed threshold"
+                    value={userPreferences.windSpeedThreshold}
+                    onChangeText={(value) =>
+                      setUserPreferences({
+                        ...userPreferences,
+                        windSpeedThreshold: value,
+                      })
+                    }
+                    keyboardType="default"
+                    editable={userPreferences.notificationsEnabled}
+                  />
+                )}
+                <Text>m/s</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Precipitation Threshold (mm)
-            </Text>
-            <View style={styles.thresholdTypeContainer}>
-              <Switch
-                value={userPreferences.showPrecipitationNotification}
-                onValueChange={(value) =>
-                  setUserPreferences({
-                    ...userPreferences,
-                    showPrecipitationNotification: value,
-                  })
-                }
-                disabled={!userPreferences.notificationsEnabled}
-              />
-              {userPreferences.showPrecipitationNotification && (
-                <TextInput
-                  style={[
-                    styles.input,
-                    !userPreferences.notificationsEnabled && styles.disabled,
-                  ]}
-                  placeholder="Precipitation threshold"
-                  value={userPreferences.precipitationThreshold}
-                  onChangeText={(value) =>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                Precipitation Threshold (mm)
+              </Text>
+              <View style={styles.thresholdTypeContainer}>
+                <Switch
+                  value={userPreferences.showPrecipitationNotification}
+                  onValueChange={(value) =>
                     setUserPreferences({
                       ...userPreferences,
-                      precipitationThreshold: value,
+                      showPrecipitationNotification: value,
                     })
                   }
-                  keyboardType="numeric"
-                  editable={userPreferences.notificationsEnabled}
+                  disabled={!userPreferences.notificationsEnabled}
                 />
-              )}
-              <Text>mm</Text>
+                {userPreferences.showPrecipitationNotification && (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      !userPreferences.notificationsEnabled && styles.disabled,
+                    ]}
+                    placeholder="Precipitation threshold"
+                    value={userPreferences.precipitationThreshold}
+                    onChangeText={(value) =>
+                      setUserPreferences({
+                        ...userPreferences,
+                        precipitationThreshold: value,
+                      })
+                    }
+                    keyboardType="default"
+                    editable={userPreferences.notificationsEnabled}
+                  />
+                )}
+                <Text>mm</Text>
+              </View>
             </View>
-          </View>
-        </>
-      )}
-      <Button
-        title="Save Preferences"
-        onPress={savePreferences}
-        disabled={!userPreferences.notificationsEnabled}
-      />
-    </View>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                Catastrophes
+              </Text>
+              <View style={[styles.thresholdTypeContainer, { marginBottom: 10 }]}>
+                <Text>Flood Alert</Text>
+                <Switch
+                  value={userPreferences.showFloodNotification}
+                  onValueChange={(value) =>
+                    setUserPreferences({
+                      ...userPreferences,
+                      showFloodNotification: value,
+                    })
+                  }
+                  disabled={!userPreferences.notificationsEnabled}
+                />
+              </View>
+              <View style={[styles.thresholdTypeContainer, { marginBottom: 10 }]}>
+                <Text>Earthquake Alert</Text>
+                <Switch
+                  value={userPreferences.showEarthquakeNotification}
+                  onValueChange={(value) =>
+                    setUserPreferences({
+                      ...userPreferences,
+                      showEarthquakeNotification: value,
+                    })
+                  }
+                  disabled={!userPreferences.notificationsEnabled}
+                />
+              </View>
+              <View style={[styles.thresholdTypeContainer, { marginBottom: 10 }]}>
+                <Text>Hurricane Alert</Text>
+                <Switch
+                  value={userPreferences.showHurricaneNotification}
+                  onValueChange={(value) =>
+                    setUserPreferences({
+                      ...userPreferences,
+                      showHurricaneNotification: value,
+                    })
+                  }
+                  disabled={!userPreferences.notificationsEnabled}
+                />
+              </View>
+              <View style={[styles.thresholdTypeContainer, { marginBottom: 10 }]}>
+                <Text>Tornado Alert</Text>
+                <Switch
+                  value={userPreferences.showTornadoNotification}
+                  onValueChange={(value) =>
+                    setUserPreferences({
+                      ...userPreferences,
+                      showTornadoNotification: value,
+                    })
+                  }
+                  disabled={!userPreferences.notificationsEnabled}
+                />
+              </View>
+              <View style={[styles.thresholdTypeContainer, { marginBottom: 10 }]}>
+                <Text>Wildfire Alert</Text>
+                <Switch
+                  value={userPreferences.showWildfireNotification}
+                  onValueChange={(value) =>
+                    setUserPreferences({
+                      ...userPreferences,
+                      showWildfireNotification: value,
+                    })
+                  }
+                  disabled={!userPreferences.notificationsEnabled}
+                />
+              </View>
+            </View>
+          </>
+        )}
+        <Button title="Save Preferences" onPress={savePreferences} disabled={!userPreferences.notificationsEnabled} />
+        {preferencesSaved && <Text style={styles.message}>Preferences have been saved!</Text>}
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -253,6 +313,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    width: "100%", // Adjusted width
   },
   checkboxContainer: {
     flexDirection: "row",
@@ -269,6 +330,10 @@ const styles = StyleSheet.create({
   disabled: {
     backgroundColor: "#f2f2f2",
     color: "#999",
+  },
+  message: {
+    marginTop: 10,
+    color: 'green',
   },
 });
 

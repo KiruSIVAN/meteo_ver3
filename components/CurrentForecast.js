@@ -1,8 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from "styled-components/native";
-import { checkAndSendNotifications } from '../screens/notificationHandler'; // Import the checkAndSendNotifications function
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getData } from '../utils/asyncStorage';
+import { checkAndSendNotifications } from '../screens/notificationHandler';
 
 const CurrentForecast = ({ currentWeather }) => {
+  const [temperatureUnit, setTemperatureUnit] = useState('');
+  const [windSpeedUnit, setWindSpeedUnit] = useState('');
+  const [timezone, setTimezone] = useState('');
+
   useEffect(() => {
     if (currentWeather && currentWeather.current) {
       const currentTemperature = currentWeather.current.temp;
@@ -12,6 +18,71 @@ const CurrentForecast = ({ currentWeather }) => {
       checkAndSendNotifications(currentTemperature, currentWindSpeed, currentPrecipitation );
     }
   }, [currentWeather]);
+
+  useEffect(() => {
+    loadTemperatureUnit();
+    loadWindSpeedUnit();
+  }, []);
+
+  useEffect(() => {
+    if (currentWeather && currentWeather.timezone) {
+      setTimezone(currentWeather.timezone);
+      storeTimezone(currentWeather.timezone); // Store timezone when it updates
+    }
+  }, [currentWeather]);
+
+  const loadTemperatureUnit = async () => {
+    try {
+      const savedUnit = await AsyncStorage.getItem('temperatureUnit');
+      setTemperatureUnit(savedUnit || 'Celsius'); // Set default unit if none saved
+    } catch (error) {
+      console.error('Error loading temperature unit:', error);
+    }
+  };
+
+  const loadWindSpeedUnit = async () => {
+    try {
+      const savedUnit = await AsyncStorage.getItem('windSpeedUnit');
+      setWindSpeedUnit(savedUnit || 'm/s'); // Set default unit if none saved
+    } catch (error) {
+      console.error('Error loading wind speed unit:', error);
+    }
+  };
+
+  const storeTimezone = async (timezone) => {
+    try {
+      await AsyncStorage.setItem('timezone', timezone);
+      console.log('Timezone : ', timezone,' stored successfully.');
+    } catch (error) {
+      console.log('Error storing timezone: ', error);
+    }
+  };
+
+  const convertToFahrenheit = (celsius) => {
+    return (celsius * 9 / 5) + 32;
+  };
+
+  const renderTemperature = (temperature) => {
+    if (temperatureUnit === 'Celsius') {
+      return Math.round(temperature) + '°C';
+    } else {
+      const Fahrenheit = convertToFahrenheit(temperature);
+      return Math.round(Fahrenheit) + '°F';
+    }
+  };
+
+  const convertToMilesPerHour = (metersPerSecond) => {
+    return metersPerSecond * 2.23694; // 1 m/s is approximately 2.23694 mph
+  };
+
+  const renderWindSpeed = (windSpeed) => {
+    if (windSpeedUnit === 'm/s') {
+      return windSpeed + ' m/s';
+    } else {
+      const milesPerHour = convertToMilesPerHour(windSpeed);
+      return Math.round(milesPerHour) + ' mph';
+    }
+  };
   
   return (
     <CurrentView>
@@ -27,13 +98,11 @@ const CurrentForecast = ({ currentWeather }) => {
             />
           )}
           <CurrentDegrees>
-            {Math.round(currentWeather.current && currentWeather.current.temp)}
-            °C
+            {currentWeather.current && renderTemperature(currentWeather.current.temp)}
           </CurrentDegrees>
         </CurrentTempView>
         <Description>
-          {currentWeather.current &&
-            currentWeather.current.weather[0].description}
+          {currentWeather.current && currentWeather.current.weather[0].description}
         </Description>
       </MainInfoContainer>
       <SecondaryInfoContainer>
@@ -41,25 +110,19 @@ const CurrentForecast = ({ currentWeather }) => {
           <DetailsBox>
             <Label>Feels</Label>
             <Details>
-              {currentWeather.current &&
-                Math.round(currentWeather.current.feels_like)}
-              °C
+              {currentWeather.current && renderTemperature(currentWeather.current.feels_like)}
             </Details>
           </DetailsBox>
           <DetailsBox>
             <Label>Low</Label>
             <Details>
-              {currentWeather.daily &&
-                Math.round(currentWeather.daily[0].temp.min)}
-              °C
+              {currentWeather.daily && renderTemperature(currentWeather.daily[0].temp.min)}
             </Details>
           </DetailsBox>
           <DetailsBox>
             <Label>High</Label>
             <Details>
-              {currentWeather.daily &&
-                Math.round(currentWeather.daily[0].temp.max)}
-              °C
+              {currentWeather.daily && renderTemperature(currentWeather.daily[0].temp.max)}
             </Details>
           </DetailsBox>
         </Row>
@@ -67,7 +130,7 @@ const CurrentForecast = ({ currentWeather }) => {
           <DetailsBox>
             <Label>Wind</Label>
             <Details>
-              {currentWeather.current && currentWeather.current.wind_speed} m/s
+              {currentWeather.current && renderWindSpeed(currentWeather.current.wind_speed)}
             </Details>
           </DetailsBox>
           <DetailsBox>
@@ -165,7 +228,6 @@ const Label = styled.Text`
 const Details = styled.Text`
   color: black;
   font-size: 15px;
-  text-transform: capitalize;
 `;
 
 export default CurrentForecast;

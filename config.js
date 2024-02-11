@@ -1,6 +1,5 @@
-import { API_KEY, GOOGLE_KEY } from "@env";
+import { API_KEY} from "@env";
 
 export default {
-  API_KEY,
-  GOOGLE_KEY,
+  API_KEY
 };

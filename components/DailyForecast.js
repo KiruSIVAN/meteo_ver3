@@ -1,9 +1,40 @@
-import React from "react";
+import React, { useEffect, useState } from "react"; // Import useState and useEffect
 import { Text } from "react-native";
 import styled from "styled-components/native";
 import moment from "moment";
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 const DailyForecast = ({ day, index }) => {
+  const [temperatureUnit, setTemperatureUnit] = useState('');
+
+  useEffect(() => {
+    // Load temperature unit when component mounts
+    loadTemperatureUnit();
+  }, []);
+
+  const loadTemperatureUnit = async () => {
+    try {
+      const savedUnit = await AsyncStorage.getItem('temperatureUnit');
+      // Set the temperature unit retrieved from AsyncStorage
+      setTemperatureUnit(savedUnit || 'Celsius'); // Set default unit if none saved
+    } catch (error) {
+      console.error('Error loading temperature unit:', error);
+    }
+  };
+
+  const convertToFahrenheit = (celsius) => {
+    return (celsius * 9 / 5) + 32;
+  };
+
+  const renderTemperature = (temperature) => {
+    if (temperatureUnit === 'Celsius') {
+      return Math.round(temperature) + '°C';
+    } else {
+      const Fahrenheit = convertToFahrenheit(temperature);
+      return Math.round(Fahrenheit) + '°F';
+    }
+  };
+
   return (
     <DayContainer>
       <DateContainer>
@@ -19,8 +50,8 @@ const DailyForecast = ({ day, index }) => {
         <Text>{day.weather[0].description}</Text>
       </IconTempView>
       <DegreeView>
-        <Degree>{Math.round(day.temp.max)}°C</Degree>
-        <FeelsLike>Feels {Math.round(day.feels_like.day)}°C</FeelsLike>
+        <Degree>{renderTemperature(day.temp.max)}</Degree>
+        <FeelsLike>Feels {renderTemperature(day.feels_like.day)}</FeelsLike>
       </DegreeView>
     </DayContainer>
   );

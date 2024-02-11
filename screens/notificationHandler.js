@@ -1,93 +1,90 @@
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Function to check user preferences and send notifications based on weather data
 export async function checkAndSendNotifications(currentTemperature, currentWindSpeed, currentPrecipitation) {
-  try {          
-      const userPreferences = await AsyncStorage.getItem('userPreferences');
-      console.log('User Preferences:', userPreferences);
+  try {         
 
-      if (userPreferences) {
-          const preferences = JSON.parse(userPreferences);
-          const { 
-              temperatureThresholdHigh, 
-              temperatureThresholdLow, 
-              showWindNotification, 
-              windSpeedThreshold, 
-              showPrecipitationNotification, 
-              precipitationThreshold 
-          } = preferences;
+    const userPreferences = await AsyncStorage.getItem('userPreferences');
+    console.log('User Preferences:', userPreferences);
+    
+    if (!userPreferences) {
+      console.log('User preferences not found in AsyncStorage.');
+      return;
+    }
+    const preferences = JSON.parse(userPreferences);
+    
+    const { 
+      temperatureThresholdHigh, 
+      temperatureThresholdLow, 
+      windSpeedThreshold, 
+      precipitationThreshold 
+    } = preferences;
+    
+    const timezone = await AsyncStorage.getItem('timezone');
+    console.log('Timezone : ', timezone);
+    
+    if (parseFloat(currentTemperature) > parseFloat(temperatureThresholdHigh)) {
+      await sendNotification(
+        'High temperature alert!',
+        `Current temperature (${currentTemperature}°C) exceeds the threshold (${temperatureThresholdHigh}°C) in (${timezone})`
+      );
+      console.log('Temperature exceeds threshold. Notification sent.');
+    }
 
-          if (parseFloat(currentTemperature) > parseFloat(temperatureThresholdHigh)) {
-              // Send notification for high temperature alert
-              await sendNotification(
-                  'High temperature alert!',
-                  `Current temperature (${currentTemperature}°C) exceeds the threshold (${temperatureThresholdHigh}°C)`
-              );
+    if (parseFloat(currentTemperature) < parseFloat(temperatureThresholdLow)) {
+      await sendNotification(
+        'Low temperature alert!',
+        `Current temperature (${currentTemperature}°C) is below the threshold (${temperatureThresholdLow}°C) in (${timezone})`
+      );
+      console.log('Temperature is below threshold. Low temperature notification sent.');
+    }
 
-              console.log('Temperature exceeds threshold. Notification sent.');
-          } else if (parseFloat(currentTemperature) < parseFloat(temperatureThresholdLow)) {
-              // Send notification for low temperature alert
-              await sendNotification(
-                  'Low temperature alert!',
-                  `Current temperature (${currentTemperature}°C) is below the threshold (${temperatureThresholdLow}°C)`
-              );
+    if (parseFloat(currentWindSpeed) > parseFloat(windSpeedThreshold)) {
+      await sendNotification(
+        'High wind speed alert!',
+        `Current wind speed (${currentWindSpeed} mph) exceeds the threshold (${windSpeedThreshold} mph) in (${timezone})`
+      );
+      console.log('Wind speed exceeds threshold. Notification sent.');
+    }
 
-              console.log('Temperature is below threshold. Low temperature notification sent.');
-          }
+    if (parseFloat(currentPrecipitation) > parseFloat(precipitationThreshold)) {
+      await sendNotification(
+        'High precipitation alert!',
+        `Current precipitation (${currentPrecipitation} mm) exceeds the threshold (${precipitationThreshold} mm) in (${timezone})`
+      );
+      console.log('Precipitation exceeds threshold. Notification sent.');
+    }
 
-          if (showWindNotification && parseFloat(currentWindSpeed) > parseFloat(windSpeedThreshold)) {
-              // Send notification for high wind speed alert
-              await sendNotification(
-                  'High wind speed alert!',
-                  `Current wind speed (${currentWindSpeed} mph) exceeds the threshold (${windSpeedThreshold} mph)`
-              );
-
-              console.log('Wind speed exceeds threshold. Notification sent.');
-          }
-
-          if (showPrecipitationNotification && parseFloat(currentPrecipitation) > parseFloat(precipitationThreshold)) {
-              // Send notification for high precipitation alert
-              await sendNotification(
-                  'High precipitation alert!',
-                  `Current precipitation (${currentPrecipitation} mm) exceeds the threshold (${precipitationThreshold} mm)`
-              );
-
-              console.log('Precipitation exceeds threshold. Notification sent.');
-          }
-      }
   } catch (error) {
-      console.error('Error occurred while checking and sending notifications:', error);
+    console.error('Error occurred while checking and sending notifications:', error);
   }
 }
 
-// Function to send a notification
 async function sendNotification(title, body) {
   try {
-    // Request permission to send notifications if not already granted
-    const { status } = await Notifications.getPermissionsAsync();
+    let { status } = await Notifications.getPermissionsAsync();
 
     if (status !== 'granted') {
-      // Request permission if not granted
       const { status: newStatus } = await Notifications.requestPermissionsAsync();
-      if (newStatus !== 'granted') {
-        console.log('Notification permissions not granted');
-        return;
-      }
+      status = newStatus;
     }
 
-    // Permissions are granted, proceed to send notification
-    await Notifications.presentNotificationAsync({
-      title,
-      body,
-      ios: {
-        sound: true,
-      },
-      android: {
-        channelId: 'default',
-        sound: true,
-      },
+    if (status !== 'granted') {
+      console.log('Notification permissions not granted');
+      return;
+    }
+
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
     });
+
+    const content = { title, body };
+    await Notifications.scheduleNotificationAsync({ content, trigger: null });
+
     console.log('Notification sent successfully!');
   } catch (error) {
     console.error('Error sending notification:', error);
